@@ -1,0 +1,62 @@
+{
+  "name": "shopify-llms-app",
+  "private": true,
+  "scripts": {
+    "build": "react-router build",
+    "dev": "shopify app dev",
+    "config:link": "shopify app config link",
+    "generate": "shopify app generate",
+    "deploy": "shopify app deploy",
+    "config:use": "shopify app config use",
+    "env": "shopify app env",
+    "start": "react-router-serve ./build/server/index.js",
+    "docker-start": "npm run setup && npm run start",
+    "setup": "prisma generate && prisma migrate deploy",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "react-router typegen && tsc --noEmit",
+    "shopify": "shopify",
+    "prisma": "prisma",
+    "graphql-codegen": "graphql-codegen"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^20.10 || >=21.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.65.0",
+    "@prisma/client": "^6.2.1",
+    "@react-router/fs-routes": "^7.7.1",
+    "@react-router/node": "^7.7.1",
+    "@react-router/serve": "^7.7.1",
+    "@shopify/app-bridge-react": "^4.1.6",
+    "@shopify/polaris": "^13.9.5",
+    "@shopify/shopify-app-react-router": "^1.0.1",
+    "@shopify/shopify-app-session-storage-prisma": "^7.0.2",
+    "bullmq": "^5.34.10",
+    "ioredis": "^5.4.2",
+    "isbot": "^5.1.0",
+    "prisma": "^6.2.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router": "^7.7.1",
+    "vite-tsconfig-paths": "^5.0.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@react-router/dev": "^7.7.1",
+    "@shopify/api-codegen-preset": "^1.1.8",
+    "@types/eslint": "^9.6.1",
+    "@types/node": "^22.10.5",
+    "@types/react": "^18.2.31",
+    "@types/react-dom": "^18.2.14",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  },
+  "workspaces": [
+    "extensions/*"
+  ],
+  "author": "Davnoot Digital"
+}

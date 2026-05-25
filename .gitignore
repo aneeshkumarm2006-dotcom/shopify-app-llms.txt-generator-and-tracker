@@ -1,0 +1,31 @@
+node_modules
+
+/.cache
+/build
+.env
+.vercel
+/.react-router
+build/
+
+.shopify
+.shopifycli.yml
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
