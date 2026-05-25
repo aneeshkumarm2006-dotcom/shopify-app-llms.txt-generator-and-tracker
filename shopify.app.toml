@@ -1,9 +1,9 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 # This file is rewritten by `shopify app config link` once linked to a Partner app.
 
-name = "Davnoot LLMs Generator"
-client_id = ""
-application_url = "https://localhost"
+name = "llms.txt generator and tracker"
+client_id = "f399710be66ddf6b867f8498215b8d8e"
+application_url = "https://example.com"
 embedded = true
 
 [build]
@@ -25,12 +25,13 @@ api_version = "2025-01"
 [access_scopes]
 # PRD §12.1 — minimum scopes required to read store content and write URL redirects.
 scopes = "read_products,read_content,write_content"
+use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://localhost/auth/callback",
-  "https://localhost/auth/shopify/callback",
-  "https://localhost/api/auth/callback"
+  "https://example.com/auth/callback",
+  "https://example.com/auth/shopify/callback",
+  "https://example.com/api/auth/callback"
 ]
 
 [pos]
@@ -39,6 +40,6 @@ embedded = false
 [app_proxy]
 # PRD §12.2 — file served at https://<store>.myshopify.com/apps/llms,
 # redirected from /llms.txt by a URL redirect created on install.
-url = "https://localhost/proxy/llms"
+url = "https://example.com/proxy/llms"
 subpath = "llms"
 prefix = "apps"
