@@ -1,0 +1,29 @@
+# Web Pixel extension — AI referral tracker. PRD §7, §12.4.
+#
+# A web pixel runs in a sandboxed iframe on the storefront. It cannot access
+# the merchant's theme DOM, but it does receive structured analytics events
+# (page_viewed, checkout_completed, …) and can call out via the standard
+# fetch API. We subscribe to page_viewed only — that is enough to classify
+# AI referrals based on utm_source / document.referrer.
+#
+# The extension is registered with Shopify via the `webPixelCreate` mutation
+# fired from the afterAuth hook in app/shopify.server.ts. Settings declared
+# here are passed back to the pixel runtime as `init.settings`.
+
+api_version = "2025-01"
+
+[[extensions]]
+name = "AI Referral Pixel"
+type = "web_pixel_extension"
+handle = "ai-referral-pixel"
+
+uid = "2dd5ae46-0e79-46b9-7070-226448b4ad3e1a8bc3f1"
+runtime_context = "strict"
+
+  [extensions.settings]
+  type = "object"
+
+    [extensions.settings.fields.accountID]
+    name = "accountID"
+    description = "Shop domain (passed automatically on install — do not edit)."
+    type = "single_line_text_field"

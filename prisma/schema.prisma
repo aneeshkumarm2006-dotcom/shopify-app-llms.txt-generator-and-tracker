@@ -1,6 +1,7 @@
 // Prisma schema for the Davnoot LLMs Generator Shopify app.
 // Generator + datasource configured for Postgres (PRD §13 — managed Postgres).
-// Phase 0 ships only the Session model; Phase 1 will add Shop, LlmsFile, GenerationJob.
+// Phase 0 shipped the Session model; Phase 1 adds Shop, LlmsFile,
+// GenerationJob; Phase 4 adds TrackingEvent.
 
 generator client {
   provider = "prisma-client-js"
@@ -31,4 +32,125 @@ model Session {
   locale        String?
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
+}
+
+enum ShopStatus {
+  active
+  uninstalled
+}
+
+enum LlmsFileSource {
+  generated
+  manual_edit
+}
+
+enum GenerationJobStatus {
+  queued
+  running
+  done
+  failed
+}
+
+enum TrackingClassification {
+  ai
+  other
+}
+
+// One row per Shopify shop that installed the app. Created on first OAuth
+// callback (afterAuth hook). Most foreign keys throughout the app point here.
+// PRD §9.
+model Shop {
+  id                String    @id @default(cuid())
+  shopDomain        String    @unique @map("shop_domain")
+  installedAt       DateTime  @default(now()) @map("installed_at")
+  proxyPath         String    @default("/apps/llms") @map("proxy_path")
+  status            ShopStatus @default(active)
+  // Phase 2 will populate redirectId; Phase 4 will populate webPixelId.
+  redirectId        String?   @map("redirect_id")
+  webPixelId        String?   @map("web_pixel_id")
+  // Soft monthly cap (PRD §14.2) is enforced by counting GenerationJobs in
+  // the current calendar month — no counter column needed.
+  lastGenerationAt  DateTime? @map("last_generation_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt      @map("updated_at")
+
+  llmsFile          LlmsFile?
+  generationJobs    GenerationJob[]
+  trackingEvents    TrackingEvent[]
+
+  @@map("shops")
+}
+
+// Current + previous file body served by the App Proxy. One row per shop
+// (1:1). Updates are in-place: the worker moves `content` → `previousContent`,
+// writes the new body, bumps `version`, sets `source = generated`. PRD §6.5,
+// §9.
+model LlmsFile {
+  id              String         @id @default(cuid())
+  shopId          String         @unique @map("shop_id")
+  content         String         @db.Text
+  previousContent String?        @db.Text @map("previous_content")
+  version         Int            @default(1)
+  source          LlmsFileSource @default(generated)
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  shop            Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@map("llms_files")
+}
+
+// One row per generation attempt — enqueue, run, complete/fail. The BullMQ
+// job id is stored alongside so the editor UI can poll status. PRD §6.3,
+// §9.
+model GenerationJob {
+  id          String              @id @default(cuid())
+  shopId      String              @map("shop_id")
+  // BullMQ job id — set when the worker dequeues, used to correlate logs.
+  queueJobId  String?             @map("queue_job_id")
+  status      GenerationJobStatus @default(queued)
+  error       String?             @db.Text
+  createdAt   DateTime            @default(now()) @map("created_at")
+  completedAt DateTime?           @map("completed_at")
+
+  shop        Shop                @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+  @@map("generation_jobs")
+}
+
+// One row per first-page-view in a browser session that we receive from the
+// AI Referral Pixel. The pixel suppresses duplicates client-side (PRD §7.2),
+// but the server still treats every row as the canonical landing event and
+// does not retroactively dedupe. PRD §7, §9.
+//
+// We deliberately store no PII: no IP, no user-agent, no customer id.
+// Aggregations roll up on (occurredAt, classification, source, utm*).
+model TrackingEvent {
+  id              String                 @id @default(cuid())
+  shopId          String                 @map("shop_id")
+  classification  TrackingClassification
+  // Canonical AI tool ("chatgpt", "perplexity", …) when classification = ai,
+  // raw utm_source otherwise. Null when neither side gave us a hint.
+  source          String?
+  // "utm" or "referrer" — which signal won the classification. Useful for
+  // debugging why a visit got flagged as AI.
+  matchedBy       String?                @map("matched_by")
+  utmSource       String?                @map("utm_source")
+  utmMedium       String?                @map("utm_medium")
+  utmCampaign     String?                @map("utm_campaign")
+  utmTerm         String?                @map("utm_term")
+  utmContent      String?                @map("utm_content")
+  referrerDomain  String?                @map("referrer_domain")
+  landingPath     String?                @map("landing_path")
+  // Pixel-reported event timestamp. We trust it for charting; server clock
+  // skew is not worth correcting at the ~minute granularity we display.
+  occurredAt      DateTime               @map("occurred_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+
+  shop            Shop                   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, occurredAt])
+  @@index([shopId, classification, occurredAt])
+  @@map("tracking_events")
 }

@@ -18,9 +18,20 @@ api_version = "2025-01"
   topics = ["app/uninstalled"]
   uri = "/webhooks/app/uninstalled"
 
+  # Mandatory GDPR / privacy topics. PRD §15.2.
+  # Per-topic URIs (instead of one shared endpoint) keep handlers focused and
+  # make Shopify's `app webhook trigger` output easier to read.
   [[webhooks.subscriptions]]
-  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
-  uri = "/webhooks/compliance"
+  compliance_topics = ["customers/data_request"]
+  uri = "/webhooks/customers/data_request"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = ["customers/redact"]
+  uri = "/webhooks/customers/redact"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = ["shop/redact"]
+  uri = "/webhooks/shop/redact"
 
 [access_scopes]
 # PRD §12.1 — minimum scopes required to read store content and write URL redirects.
