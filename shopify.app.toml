@@ -3,13 +3,12 @@
 
 name = "llms.txt generator and tracker"
 client_id = "f399710be66ddf6b867f8498215b8d8e"
-application_url = "https://example.com"
+application_url = "https://shopify-app-llms-txt-generator-and.onrender.com"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
 dev_store_url = ""
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-01"
@@ -40,9 +39,9 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://example.com/auth/callback",
-  "https://example.com/auth/shopify/callback",
-  "https://example.com/api/auth/callback"
+  "https://shopify-app-llms-txt-generator-and.onrender.com/auth/callback",
+  "https://shopify-app-llms-txt-generator-and.onrender.com/auth/shopify/callback",
+  "https://shopify-app-llms-txt-generator-and.onrender.com/api/auth/callback"
 ]
 
 [pos]
@@ -51,6 +50,6 @@ embedded = false
 [app_proxy]
 # PRD §12.2 — file served at https://<store>.myshopify.com/apps/llms,
 # redirected from /llms.txt by a URL redirect created on install.
-url = "https://example.com/proxy/llms"
+url = "https://shopify-app-llms-txt-generator-and.onrender.com/proxy/llms"
 subpath = "llms"
 prefix = "apps"
