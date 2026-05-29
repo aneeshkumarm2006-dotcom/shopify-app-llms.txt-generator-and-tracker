@@ -60,7 +60,7 @@ export interface PageSummary {
 export interface PolicySummary {
   id: string;
   title: string;
-  handle: string;
+  type: string;
   url: string;
   body: string | null;
 }
@@ -384,13 +384,16 @@ export async function fetchPages(
 // --- policies -------------------------------------------------------------
 // Shop policies are a fixed, finite set returned by `Shop.shopPolicies` — no
 // pagination needed.
+// NOTE: `ShopPolicy` has no `handle` field in the Admin GraphQL API — its
+// fields are id / title / type / url / body. We key off `type` (the
+// ShopPolicyType enum, e.g. PRIVACY_POLICY) instead.
 const POLICIES_QUERY = /* GraphQL */ `
   query LlmsPolicies {
     shop {
       shopPolicies {
         id
         title
-        handle
+        type
         url
         body
       }
@@ -403,7 +406,7 @@ interface PoliciesQueryResult {
     shopPolicies: Array<{
       id: string;
       title: string;
-      handle: string;
+      type: string;
       url: string;
       body: string | null;
     }>;
@@ -411,11 +414,29 @@ interface PoliciesQueryResult {
 }
 
 export async function fetchPolicies(admin: AdminApiContext): Promise<PolicySummary[]> {
-  const data = await gql<PoliciesQueryResult>(admin, POLICIES_QUERY);
+  let data: PoliciesQueryResult;
+  try {
+    data = await gql<PoliciesQueryResult>(admin, POLICIES_QUERY);
+  } catch (err) {
+    // `shopPolicies` requires the `read_legal_policies` scope (Admin API
+    // 2025-01+). If the app wasn't granted it, treat policies as empty rather
+    // than failing the whole generation — same tolerance as fetchBlogArticles.
+    // Add "read_legal_policies" to SCOPES and reinstall to include them.
+    const message = err instanceof Error ? err.message : String(err);
+    if (
+      message.includes("ACCESS_DENIED") ||
+      message.includes("access scope") ||
+      message.includes("read_legal_policies") ||
+      message.includes("not authorized")
+    ) {
+      return [];
+    }
+    throw err;
+  }
   return data.shop.shopPolicies.map((p) => ({
     id: p.id,
     title: p.title,
-    handle: p.handle,
+    type: p.type,
     url: p.url,
     body: truncate(p.body, 400),
   }));

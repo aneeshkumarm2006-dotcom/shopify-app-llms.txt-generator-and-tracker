@@ -29,7 +29,12 @@ if (host === "localhost") {
 
 export default defineConfig({
   server: {
-    allowedHosts: [host],
+    // `host` is derived from SHOPIFY_APP_URL (the prod/Render URL). During
+    // `shopify app dev` the app is served through a random *.trycloudflare.com
+    // tunnel that changes each run, so we allow the whole tunnel domain.
+    // Leading-dot entries match any subdomain. Add ".ngrok-free.app" etc. if
+    // you switch the CLI tunnel provider.
+    allowedHosts: [host, ".trycloudflare.com"],
     cors: {
       preflightContinue: true,
     },

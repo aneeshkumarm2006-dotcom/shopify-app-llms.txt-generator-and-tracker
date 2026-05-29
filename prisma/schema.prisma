@@ -32,6 +32,10 @@ model Session {
   locale        String?
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
+  // Added for @shopify/shopify-app-session-storage-prisma v9 — the adapter
+  // now persists rotating refresh tokens alongside the access token.
+  refreshToken         String?
+  refreshTokenExpires  DateTime?
 }
 
 enum ShopStatus {
