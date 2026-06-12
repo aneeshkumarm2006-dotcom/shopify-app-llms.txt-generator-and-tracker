@@ -1,14 +1,15 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 # This file is rewritten by `shopify app config link` once linked to a Partner app.
 
-name = "llms.txt generator and tracker"
-client_id = "f399710be66ddf6b867f8498215b8d8e"
-application_url = "https://shopify-app-llms-txt-generator-and.onrender.com"
+name = "Davnoot LLMs Generator"
+client_id = ""
+application_url = "https://localhost"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
 dev_store_url = ""
+include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-01"
@@ -17,31 +18,19 @@ api_version = "2025-01"
   topics = ["app/uninstalled"]
   uri = "/webhooks/app/uninstalled"
 
-  # Mandatory GDPR / privacy topics. PRD §15.2.
-  # Per-topic URIs (instead of one shared endpoint) keep handlers focused and
-  # make Shopify's `app webhook trigger` output easier to read.
   [[webhooks.subscriptions]]
-  compliance_topics = ["customers/data_request"]
-  uri = "/webhooks/customers/data_request"
-
-  [[webhooks.subscriptions]]
-  compliance_topics = ["customers/redact"]
-  uri = "/webhooks/customers/redact"
-
-  [[webhooks.subscriptions]]
-  compliance_topics = ["shop/redact"]
-  uri = "/webhooks/shop/redact"
+  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+  uri = "/webhooks/compliance"
 
 [access_scopes]
 # PRD §12.1 — minimum scopes required to read store content and write URL redirects.
 scopes = "read_products,read_content,write_content"
-use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://shopify-app-llms-txt-generator-and.onrender.com/auth/callback",
-  "https://shopify-app-llms-txt-generator-and.onrender.com/auth/shopify/callback",
-  "https://shopify-app-llms-txt-generator-and.onrender.com/api/auth/callback"
+  "https://localhost/auth/callback",
+  "https://localhost/auth/shopify/callback",
+  "https://localhost/api/auth/callback"
 ]
 
 [pos]
@@ -50,6 +39,6 @@ embedded = false
 [app_proxy]
 # PRD §12.2 — file served at https://<store>.myshopify.com/apps/llms,
 # redirected from /llms.txt by a URL redirect created on install.
-url = "https://shopify-app-llms-txt-generator-and.onrender.com/proxy/llms"
+url = "https://localhost/proxy/llms"
 subpath = "llms"
 prefix = "apps"
