@@ -12,15 +12,17 @@
 // body string plus metadata; persistence and version-bumping live in the
 // worker so we can keep this function side-effect free and easy to test.
 
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import type { AdminApiContext } from "@shopify/shopify-app-react-router/server";
 
 import { getAnthropic, getModel } from "./client";
 import { buildContentBrief, type ContentBrief } from "./brief-builder";
 import { fetchStoreData } from "../shopify/admin-fetcher";
+
+// Prompt templates are imported as raw strings so Vite inlines them into the
+// server bundle at build time. Reading them from disk at runtime fails on
+// hosts (e.g. Render) whose build output does not include the .md files.
+import llmsSystemPrompt from "./prompts/llms-system.md?raw";
+import llmsUserPromptTemplate from "./prompts/llms-user.md?raw";
 
 // Hard size cap on the generated body. 6,000 words is roughly 40 KB; we set
 // the byte cap higher so a long-but-valid file is not rejected on length
@@ -30,31 +32,12 @@ const MAX_BYTES = 80_000;
 // sections. Below this we treat the output as invalid and retry.
 const MIN_BYTES = 200;
 
-// Resolve prompt files relative to this module. They are bundled with the
-// server build because they sit inside `app/`, so Vite copies them — but at
-// runtime we always read from disk to make iteration cheap.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-let cachedSystemPrompt: string | null = null;
-let cachedUserPromptTemplate: string | null = null;
-
 function loadSystemPrompt(): string {
-  if (cachedSystemPrompt) return cachedSystemPrompt;
-  cachedSystemPrompt = readFileSync(
-    join(__dirname, "prompts", "llms-system.md"),
-    "utf8",
-  );
-  return cachedSystemPrompt;
+  return llmsSystemPrompt;
 }
 
 function loadUserPromptTemplate(): string {
-  if (cachedUserPromptTemplate) return cachedUserPromptTemplate;
-  cachedUserPromptTemplate = readFileSync(
-    join(__dirname, "prompts", "llms-user.md"),
-    "utf8",
-  );
-  return cachedUserPromptTemplate;
+  return llmsUserPromptTemplate;
 }
 
 function renderUserPrompt(brief: ContentBrief): string {
