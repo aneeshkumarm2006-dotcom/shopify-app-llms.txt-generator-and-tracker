@@ -7,6 +7,7 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 
 import prisma from "./db.server";
+import { enqueueGeneration } from "./jobs/generation.queue";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -27,10 +28,38 @@ const shopify = shopifyApp({
     : {}),
   hooks: {
     afterAuth: async ({ session }) => {
-      // Phase 1 will enqueue the initial llms.txt generation here.
+      await shopify.registerWebhooks({ session });
+
+      // Create (or reactivate, on reinstall) the Shop row. Without this no
+      // Shop record exists, so every shop-scoped route — Regenerate, the
+      // proxy, tracking — treats the install as "not active". The uninstall
+      // webhook flips status back to "uninstalled"; reinstalling flips it
+      // here to "active" again.
+      const shop = await prisma.shop.upsert({
+        where: { shopDomain: session.shop },
+        create: { shopDomain: session.shop, status: "active" },
+        update: { status: "active" },
+        select: { id: true, shopDomain: true },
+      });
+
+      // Kick off the initial llms.txt generation so the editor isn't empty
+      // on first load. Non-fatal: if the queue (Redis) is unreachable the
+      // install still succeeds and the merchant can click Regenerate later.
+      try {
+        await enqueueGeneration({
+          shopId: shop.id,
+          shopDomain: shop.shopDomain,
+          trigger: "install",
+        });
+      } catch (err) {
+        console.error(
+          `[afterAuth] initial generation enqueue failed for ${shop.shopDomain}:`,
+          err,
+        );
+      }
+
       // Phase 2 will create the /llms.txt URL redirect here.
       // Phase 4 will register the web pixel here.
-      shopify.registerWebhooks({ session });
     },
   },
 });
