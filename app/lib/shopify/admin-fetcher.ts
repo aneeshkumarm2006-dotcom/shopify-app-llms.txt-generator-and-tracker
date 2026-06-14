@@ -516,7 +516,17 @@ export async function fetchStoreData(admin: AdminApiContext): Promise<StoreData>
       fetchProducts(admin),
       fetchCollections(admin),
       fetchPages(admin),
-      fetchPolicies(admin),
+      // Policies require the `read_legal_policies` scope, which this app does
+      // not request. If the store hasn't granted it, skip policies rather than
+      // failing the entire generation — they're supplementary brief content.
+      fetchPolicies(admin).catch((err) => {
+        console.warn(
+          `[admin-fetcher] skipping policies: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+        return [] as PolicySummary[];
+      }),
       fetchBlogArticles(admin),
     ]);
 
