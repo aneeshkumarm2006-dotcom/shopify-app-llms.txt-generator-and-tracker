@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { Link, Outlet, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
@@ -11,6 +12,37 @@ import { authenticate } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
+// Make every Polaris link/button `url` navigate client-side through React
+// Router instead of rendering a plain <a>. A full-document <a> load to an
+// in-app path (e.g. /app/llms) drops the embedded App Bridge session token,
+// so the server sees an unauthenticated request and bounces to re-install
+// (the "accounts.shopify.com refused to connect" failure). External/absolute
+// URLs keep normal anchor behaviour.
+function PolarisLinkComponent({
+  children,
+  url = "",
+  external,
+  ...rest
+}: {
+  children?: ReactNode;
+  url?: string;
+  external?: boolean;
+  [key: string]: unknown;
+}) {
+  if (external || /^https?:\/\//.test(url)) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" {...rest}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link to={url} {...rest}>
+      {children}
+    </Link>
+  );
+}
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
 
@@ -22,7 +54,7 @@ export default function App() {
 
   return (
     <AppProvider embedded apiKey={apiKey}>
-      <PolarisAppProvider i18n={enTranslations}>
+      <PolarisAppProvider i18n={enTranslations} linkComponent={PolarisLinkComponent}>
         <NavMenu>
           <Link to="/app" rel="home">
             Home
