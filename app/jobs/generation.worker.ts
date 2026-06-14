@@ -139,7 +139,11 @@ export function startGenerationWorker(): Worker<GenerationJobData> {
     GENERATION_QUEUE_NAME,
     processGenerationJob,
     {
-      connection: getRedis(),
+      // A Worker holds a blocking connection. When the worker runs in the same
+      // process as the producer (in-process boot), it must NOT share the
+      // queue's connection or the blocking read would stall queue.add(). A
+      // dedicated duplicate keeps producer and consumer connections separate.
+      connection: getRedis().duplicate(),
       concurrency: 2,
     },
   );

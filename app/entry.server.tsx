@@ -7,9 +7,14 @@ import { isbot } from "isbot";
 import type { RenderToPipeableStreamOptions } from "react-dom/server";
 import { renderToPipeableStream } from "react-dom/server";
 
+import { bootGenerationWorker } from "./jobs/boot.server";
 import { addDocumentResponseHeaders } from "./shopify.server";
 
 export const streamTimeout = 5_000;
+
+// Start the in-process generation worker once, on server boot. Safe no-op when
+// REDIS_URL is unset or the worker is already running (idempotent).
+bootGenerationWorker();
 
 export default async function handleRequest(
   request: Request,
