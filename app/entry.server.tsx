@@ -12,16 +12,17 @@ import { addDocumentResponseHeaders } from "./shopify.server";
 
 export const streamTimeout = 5_000;
 
-// Start the in-process generation worker once, on server boot. Safe no-op when
-// REDIS_URL is unset or the worker is already running (idempotent).
-bootGenerationWorker();
-
 export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
   reactRouterContext: EntryContext,
 ) {
+  // Boot the in-process generation worker on the first request rather than at
+  // module load — module load also runs during `react-router build`, where a
+  // build environment with REDIS_URL set would otherwise spin up a Worker.
+  // Idempotent (guarded by a `booted` flag), so per-request calls are cheap.
+  bootGenerationWorker();
   addDocumentResponseHeaders(request, responseHeaders);
   const userAgent = request.headers.get("user-agent");
   const callbackName: keyof RenderToPipeableStreamOptions =

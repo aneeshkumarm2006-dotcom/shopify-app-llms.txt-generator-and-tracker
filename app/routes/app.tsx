@@ -29,9 +29,21 @@ function PolarisLinkComponent({
   external?: boolean;
   [key: string]: unknown;
 }) {
-  if (external || /^https?:\/\//.test(url)) {
+  // Only true in-app paths (absolute "/..." but not protocol-relative "//...")
+  // go through React Router, which preserves the embedded App Bridge session
+  // token. Everything else — absolute URLs of any scheme (http, mailto, tel),
+  // protocol-relative URLs, hash anchors, empty hrefs — renders as a normal
+  // anchor. `target="_blank"` is driven by Polaris's `external` flag (matching
+  // its own behaviour); callers can still override target/rel via props.
+  const isInAppPath = url.startsWith("/") && !url.startsWith("//");
+  if (!isInAppPath) {
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" {...rest}>
+      <a
+        href={url}
+        rel="noopener noreferrer"
+        {...(external ? { target: "_blank" } : null)}
+        {...rest}
+      >
         {children}
       </a>
     );

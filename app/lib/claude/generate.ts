@@ -182,9 +182,3 @@ export async function generateLlmsFile(
     ? lastError
     : new LlmsGenerationError("Generation failed for unknown reason");
 }
-
-// Test-only: clear cached prompt files so tests can swap them mid-run.
-export function __resetPromptCache() {
-  cachedSystemPrompt = null;
-  cachedUserPromptTemplate = null;
-}
