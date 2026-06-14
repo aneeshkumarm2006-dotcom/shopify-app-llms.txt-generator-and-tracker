@@ -1,44 +1,18 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-# This file is rewritten by `shopify app config link` once linked to a Partner app.
 
-name = "Davnoot LLMs Generator"
-client_id = ""
-application_url = "https://localhost"
+client_id = "4dbd36c20edc0826f36804766b1c4dd4"
+name = "Edtack App"
+application_url = "https://example.com"
 embedded = true
 
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = ""
-include_config_on_deploy = true
-
-[webhooks]
-api_version = "2025-01"
-
-  [[webhooks.subscriptions]]
-  topics = ["app/uninstalled"]
-  uri = "/webhooks/app/uninstalled"
-
-  [[webhooks.subscriptions]]
-  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
-  uri = "/webhooks/compliance"
-
 [access_scopes]
-# PRD §12.1 — minimum scopes required to read store content and write URL redirects.
-scopes = "read_products,read_content,write_content"
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = ""
+optional_scopes = [ ]
+use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [
-  "https://localhost/auth/callback",
-  "https://localhost/auth/shopify/callback",
-  "https://localhost/api/auth/callback"
-]
+redirect_urls = [ ]
 
-[pos]
-embedded = false
-
-[app_proxy]
-# PRD §12.2 — file served at https://<store>.myshopify.com/apps/llms,
-# redirected from /llms.txt by a URL redirect created on install.
-url = "https://localhost/proxy/llms"
-subpath = "llms"
-prefix = "apps"
+[webhooks]
+api_version = "2026-04"
