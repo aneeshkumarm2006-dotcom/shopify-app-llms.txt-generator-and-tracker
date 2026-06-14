@@ -62,7 +62,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return {
     shopDomain: session.shop,
-    publicUrl: `https://${session.shop}/llms.txt`,
+    // The file is served via the Shopify App Proxy at this storefront path
+    // (default /apps/llms). It is NOT at /llms.txt — Shopify serves its own
+    // native agent file there, so advertising /llms.txt was misleading.
+    publicUrl: `https://${session.shop}${shop?.proxyPath ?? "/apps/llms"}`,
     file: shop?.llmsFile
       ? {
           content: shop.llmsFile.content,
