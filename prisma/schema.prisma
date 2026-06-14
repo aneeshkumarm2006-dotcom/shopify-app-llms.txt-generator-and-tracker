@@ -1,6 +1,9 @@
 // Prisma schema for the Davnoot LLMs Generator Shopify app.
 // Generator + datasource configured for Postgres (PRD §13 — managed Postgres).
-// Phase 0 ships only the Session model; Phase 1 will add Shop, LlmsFile, GenerationJob.
+// Models below mirror the SQL in prisma/migrations exactly (table/column names
+// via @map/@@map, enums, relations). Keep this file in sync with the migrations
+// whenever a new migration lands — the generated Prisma Client is built from
+// THIS file, not from the database.
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +12,28 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum ShopStatus {
+  active
+  uninstalled
+}
+
+enum LlmsFileSource {
+  generated
+  manual_edit
+}
+
+enum GenerationJobStatus {
+  queued
+  running
+  done
+  failed
+}
+
+enum TrackingClassification {
+  ai
+  other
 }
 
 // Session table is consumed by @shopify/shopify-app-session-storage-prisma.
@@ -31,4 +56,76 @@ model Session {
   locale        String?
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
+}
+
+model Shop {
+  id               String     @id @default(cuid())
+  shopDomain       String     @unique @map("shop_domain")
+  installedAt      DateTime   @default(now()) @map("installed_at")
+  proxyPath        String     @default("/apps/llms") @map("proxy_path")
+  status           ShopStatus @default(active)
+  redirectId       String?    @map("redirect_id")
+  webPixelId       String?    @map("web_pixel_id")
+  lastGenerationAt DateTime?  @map("last_generation_at")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  llmsFile        LlmsFile?
+  generationJobs  GenerationJob[]
+  trackingEvents  TrackingEvent[]
+
+  @@map("shops")
+}
+
+model LlmsFile {
+  id              String         @id @default(cuid())
+  shopId          String         @unique @map("shop_id")
+  content         String
+  previousContent String?        @map("previous_content")
+  version         Int            @default(1)
+  source          LlmsFileSource @default(generated)
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@map("llms_files")
+}
+
+model GenerationJob {
+  id          String              @id @default(cuid())
+  shopId      String              @map("shop_id")
+  queueJobId  String?             @map("queue_job_id")
+  status      GenerationJobStatus @default(queued)
+  error       String?
+  createdAt   DateTime            @default(now()) @map("created_at")
+  completedAt DateTime?           @map("completed_at")
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+  @@map("generation_jobs")
+}
+
+model TrackingEvent {
+  id             String                 @id @default(cuid())
+  shopId         String                 @map("shop_id")
+  classification TrackingClassification
+  source         String?
+  matchedBy      String?                @map("matched_by")
+  utmSource      String?                @map("utm_source")
+  utmMedium      String?                @map("utm_medium")
+  utmCampaign    String?                @map("utm_campaign")
+  utmTerm        String?                @map("utm_term")
+  utmContent     String?                @map("utm_content")
+  referrerDomain String?                @map("referrer_domain")
+  landingPath    String?                @map("landing_path")
+  occurredAt     DateTime               @map("occurred_at")
+  createdAt      DateTime               @default(now()) @map("created_at")
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, occurredAt])
+  @@index([shopId, classification, occurredAt])
+  @@map("tracking_events")
 }
