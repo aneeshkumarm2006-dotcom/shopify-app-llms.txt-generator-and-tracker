@@ -60,7 +60,6 @@ export interface PageSummary {
 export interface PolicySummary {
   id: string;
   title: string;
-  handle: string;
   url: string;
   body: string | null;
 }
@@ -390,7 +389,6 @@ const POLICIES_QUERY = /* GraphQL */ `
       shopPolicies {
         id
         title
-        handle
         url
         body
       }
@@ -403,7 +401,6 @@ interface PoliciesQueryResult {
     shopPolicies: Array<{
       id: string;
       title: string;
-      handle: string;
       url: string;
       body: string | null;
     }>;
@@ -415,7 +412,6 @@ export async function fetchPolicies(admin: AdminApiContext): Promise<PolicySumma
   return data.shop.shopPolicies.map((p) => ({
     id: p.id,
     title: p.title,
-    handle: p.handle,
     url: p.url,
     body: truncate(p.body, 400),
   }));
